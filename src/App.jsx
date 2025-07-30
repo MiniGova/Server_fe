@@ -5,7 +5,7 @@ import "./App.css";
 
 
 function App() {
-  const [form, setForm] = useState({ id: "", name: "", age: "", email: "", password: "" });
+  const [form, setForm] = useState({ id:Number(""), name: "", age:Number(""), email: "", password: "" });
   const [users, setUsers] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const[edit,setEdit]=useState({});
@@ -48,14 +48,18 @@ function App() {
 const handleUpdate=(e)=>{
    e.preventDefault()
    axios.put(`https://api-node-payment-23la.onrender.com/user/update/${edit.id}`,edit)
-   .then((res)=> alert(res.data.message))
+   .then((res)=> {
+    alert(res.data.message)
+    setEditMode(false);
+   })
    .catch((err) => console.error(err));
-   setEditMode(false);
+   
      fetchUsers();
 }
   const handleEdit = (user) => {
     setEditMode(true);
     setEdit(user);
+  
    
   };
 
