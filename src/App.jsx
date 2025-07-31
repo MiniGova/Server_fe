@@ -1,119 +1,141 @@
-
-import { useState, useEffect } from "react";
-import axios from "axios";
-import "./App.css";
-
+import { useEffect, useState } from 'react'
+import './App.css'
+import axios from "axios"
 
 function App() {
-  const [form, setForm] = useState({ id:Number(""), name: "", age:Number(""), email: "", password: "" });
-  const [users, setUsers] = useState([]);
-  const [editMode, setEditMode] = useState(false);
-  const[edit,setEdit]=useState({});
+  const [user, setUser] = useState([])
 
-  const fetchUsers = () => {
-    axios.get("https://api-node-payment-23la.onrender.com/user/getdata")
-      .then((res) => setUsers(res.data.result))
-      .catch((err) => console.error(err));
-  };
+  const [id, setId] = useState(0);
+  const [name, setName] = useState("")
+  const [age, setAge] = useState(0)
+  const [email, setEmail] = useState("")
+  const [pass, setPass] = useState("")
 
+  const [modal,setModal]=useState(false)
+  const [edit,setEdit]=useState({});
+// https://api-node-payment-23la.onrender.com
   useEffect(() => {
-    fetchUsers();
-  }, [editMode]);
+    axios.get("https://api-node-payment-23la.onrender.com/user/getdata")
+      // .then((res) => res.json())
+      .then(res => setUser(res.data.result))
+      .catch((err) => setError(err.message))
+  }, [id , modal])
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e) => {
+  const addData = (e) => {
     e.preventDefault();
-     
-      // Add new user
-      axios.post("https://api-node-payment-23la.onrender.com/user/postdata", form)
-        .then(() => {
-          fetchUsers();
-          setForm({ id: "", name: "", age: "", email: "", password: "" });
-        })
-        .catch((err) => console.error(err));
-    
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      axios.delete(`https://api-node-payment-23la.onrender.com/user/delete/${id}`)
-        .then(() => fetchUsers())
-        .catch((err) => console.error(err));
+    var newData = {
+      id: Number(id),
+      name: name,
+      age: Number(age),
+      email: email,
+      password: pass
     }
-  };
-const handleUpdate=(e)=>{
-   e.preventDefault()
-   axios.put(`https://api-node-payment-23la.onrender.com/user/update/${edit.id}`,edit)
-   .then((res)=> {
-    alert(res.data.message)
-    setEditMode(false);
-   })
-   .catch((err) => console.error(err));
-   
-     fetchUsers();
-}
-  const handleEdit = (user) => {
-    setEditMode(true);
-    setEdit(user);
+
+    axios.post("https://api-node-payment-23la.onrender.com/user/postdata", newData)
+      .then((res) => alert(res.data.message))
+      .catch((err) => alert(err.message))
+    setId("")
+    setName("")
+    setEmail("")
+    setAge("")
+    setPass("")
   
-   
-  };
+    
+  }
+ const deleteData = (e) => {//string  
+  axios.delete(`https://api-node-payment-23la.onrender.com/user/delete/${e}`)//
+    .then((res) => {
+      alert(res.data.message);
+      setUser(prev => prev.filter(ele => ele.id !== e)); // remove from UI
+    })
+    .catch(err => alert(err.message));
+}
 
+  const editClicked=(e)=>{
+    setModal(true)
+    setEdit(e)    
+  }
+
+  const updateData=(e)=>{
+      e.preventDefault();
+      console.log(edit);
+      axios.put(`https://api-node-payment-23la.onrender.com/user/update/${edit.id}`,edit)
+      .then((res)=>{
+        alert(res.data.message);
+        setModal(false);
+      })
+      .catch(err=>alert(err.message))
+      
+  }
   return (
-    <div className="container">
-      <h1>Welcome</h1>
-      <form onSubmit={handleSubmit}>
-        <input type="text" name="id" value={form.id} placeholder="ID" onChange={handleChange} required />
-        <input type="text" name="name" value={form.name} placeholder="Enter a text" onChange={handleChange} required />
-        <input type="number" name="age" value={form.age} placeholder="Age" onChange={handleChange} required />
-        <input type="email" name="email" value={form.email} placeholder="Enter Email" onChange={handleChange} required />
-        <input type="password" name="password" value={form.password} placeholder="Enter a password" onChange={handleChange} required />
-        <button type="submit">{editMode ? "Update" : "Submit"}</button>
-      </form>
+    <>
+      <div>
+        <form onSubmit={addData} style={{ border: "1px solid red", borderRadius: "10px", padding: "30px 60px", marginBottom: "50px" }}>
+          <h1>Welcome</h1>
+          <label>ID</label><br />
+          <input type="number" value={id} onChange={(e) => setId(e.target.value)} placeholder='Enter a number' /><br />
+          <label>Name</label><br />
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder='Enter a text' /><br />
+          <label>Age</label><br />
+          <input type="number" value={age} onChange={(e) => setAge(e.target.value)} placeholder='Enter a Age' /><br />
+          <label>Email</label><br />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder='Enter a Email' /><br />
+          <label>Password</label><br />
+          <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder='Enter a password' /><br />
+          <input type="submit" value="Submit" />
+        </form>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Id</th><th>Name</th><th>Age</th><th>Email</th><th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => (
-            <tr key={u.id}>
-              <td>{u.id}</td>
-              <td>{u.name}</td>
-              <td>{u.age}</td>
-              <td>{u.email}</td>
-              <td>
-                <button onClick={() => handleEdit(u)}>Edit</button>
-                <button onClick={() => handleDelete(u.id)}>delete</button>
-              </td>
+        <table border={"1"} >
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Name</th>
+              <th>Age</th>
+              <th>Email</th>
+              <th>Action</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-       {editMode && (
-        <div className="modal">
+          </thead>
+          <tbody>
+            {user.map((ele, i) => (
+              <tr key={i}>
+                <td style={{ padding: "5px" }}>{ele.id}</td>
+                <td style={{ padding: "5px" }}>{ele.name}</td>
+                <td style={{ padding: "5px" }}>{ele.age}</td>
+                <td style={{ padding: "5px" }}>{ele.email}</td>
+                <td style={{ padding: "5px" }}>
+                  <button style={{ marginRight: "10px" }} onClick={()=>editClicked(ele)}>Edit</button>
+                  <button onClick={() => deleteData(ele.id)}>delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* edit modal */}
+        {modal && (
+          <div className="modal">
           <div className="modal-content">
             <h2>Edit User</h2>
-            <form onSubmit={handleUpdate}>
-              <input type="text" name="id" value={edit.id} onChange={(e) => setEdit({...edit,id:e.target.value})} readOnly />
-              <input type="text" name="name" value={edit.name} onChange={(e)=>setEdit({...edit,name:e.target.value})}required />
-              <input type="number" name="age" value={edit.age} onChange={(e)=>setEdit({...edit,age:e.target.value})} required />
-              <input type="email" name="email" value={edit.email} onChange={(e)=>setEdit({...edit,email:e.target.value})} required />
-              <input type="password" name="password" value={edit.password} onChange={(e)=>setEdit({...edit,password:e.target.value})} required />
-              <button type="submit">Update</button>
-              
+            <form style={{gap:"0px"}} >
+              <label>ID</label><br />
+              <input type="number" value={edit.id} onChange={(e)=>setEdit({...edit,id:e.target.value})} /><br />
+              <label>Name</label><br />
+              <input type="text" value={edit.name} onChange={(e)=>setEdit({...edit,name:e.target.value})} /><br />
+              <label>Age</label><br />
+              <input type="number" value={edit.age} onChange={(e)=>setEdit({...edit,age:e.target.value})}/><br />
+              <label>Email</label><br />
+              <input type="email" value={edit.email} onChange={(e)=>setEdit({...edit,email:e.target.value})} /><br />
+              <label>Password</label><br />
+              <input type="password" value={edit.password} onChange={(e)=>setEdit({...edit,password:e.target.value})} /><br />
+              <button onClick={updateData} type="submit" style={{color:"red"}}>Update</button>
             </form>
           </div>
         </div>
-      )}
-    </div>
-  );
+        )}
+
+      </div>
+    </>
+  )
 }
 
-export default App;
+export default App
